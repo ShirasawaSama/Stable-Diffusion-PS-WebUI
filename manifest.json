@@ -1,0 +1,113 @@
+{
+  "name": "Stable-Diffusion-PS-WebUI",
+  "id": "0gbe6n",
+  "version": "1.0.0",
+  "main": "index.html",
+  "manifestVersion": 5,
+  "host": [
+    {
+      "app": "PS",
+      "minVersion": "24"
+    }
+  ],
+  "requiredPermissions": {
+    "clipboard": "readAndWrite",
+    "webview": {
+      "allow": "yes",
+      "domains": "all",
+      "allowLocalRendering": "yes",
+      "enableMessageBridge": "localAndRemote"
+    }
+  },
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "mainPanel",
+      "label": "Stable Diffusion WebUI",
+      "minimumSize": {
+        "width": 400,
+        "height": 400
+      },
+      "maximumSize": {
+        "width": 9999999,
+        "height": 9999999
+      },
+      "preferredDockedSize": {
+        "width": 400,
+        "height": 400
+      },
+      "preferredFloatingSize": {
+        "width": 800,
+        "height": 800
+      },
+      "icons": [
+        {
+          "width": 32,
+          "height": 32,
+          "path": "images/icon@1x.png",
+          "scale": [
+            1,
+            2
+          ],
+          "theme": [
+            "dark",
+            "darkest"
+          ],
+          "species": [
+            "generic"
+          ]
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "path": "images/icon@2x.png",
+          "scale": [
+            1,
+            2
+          ],
+          "theme": [
+            "lightest",
+            "light"
+          ],
+          "species": [
+            "generic"
+          ]
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "width": 32,
+      "height": 32,
+      "path": "images/icon@1x.png",
+      "scale": [
+        1,
+        2
+      ],
+      "theme": [
+        "dark",
+        "darkest"
+      ],
+      "species": [
+        "generic"
+      ]
+    },
+    {
+      "width": 32,
+      "height": 32,
+      "path": "images/icon@2x.png",
+      "scale": [
+        1,
+        2
+      ],
+      "theme": [
+        "lightest",
+        "light"
+      ],
+      "species": [
+        "generic"
+      ]
+    }
+  ]
+}
