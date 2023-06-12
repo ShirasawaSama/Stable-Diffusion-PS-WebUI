@@ -1,15 +1,13 @@
 {
-  "name": "Stable-Diffusion-PS-WebUI",
-  "id": "0gbe6n",
+  "name": "Stable Diffusion PS WebUI",
+  "id": "stable.diffusion.ps.webui",
   "version": "1.0.0",
   "main": "index.html",
   "manifestVersion": 5,
-  "host": [
-    {
-      "app": "PS",
-      "minVersion": "24"
-    }
-  ],
+  "host": {
+    "app": "PS",
+    "minVersion": "24.0.0"
+  },
   "requiredPermissions": {
     "webview": {
       "allow": "yes",
@@ -24,10 +22,10 @@
   "entrypoints": [
     {
       "type": "panel",
-      "id": "mainPanel",
+      "id": "vanilla",
       "label": "Stable Diffusion WebUI",
       "minimumSize": {
-        "width": 400,
+        "width": 600,
         "height": 400
       },
       "maximumSize": {
@@ -35,8 +33,8 @@
         "height": 9999999
       },
       "preferredDockedSize": {
-        "width": 400,
-        "height": 400
+        "width": 600,
+        "height": 700
       },
       "preferredFloatingSize": {
         "width": 800,
