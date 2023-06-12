@@ -28,8 +28,8 @@
       "id": "vanilla",
       "label": "Stable Diffusion WebUI",
       "minimumSize": {
-        "width": 600,
-        "height": 200
+        "width": 200,
+        "height": 80
       },
       "maximumSize": {
         "width": 9999999,

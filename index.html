@@ -23,7 +23,7 @@
     }
 
     #fill {
-      margin-right: 16px;
+      margin-right: 6px;
     }
     #go {
       margin-left: 6px;
@@ -39,13 +39,30 @@
       color: inherit!important;
     }
 
-    sp-checkbox {
+    #ws-mode {
       position: absolute;
       right: 16px;
     }
 
     sp-textfield {
       width: 140px;
+    }
+
+    @media (max-width: 530px) {
+      sp-body {
+        position: relative;
+        top: 0;
+        left: 0;
+      }
+
+      #fill, #go {
+        margin: 0;
+      }
+
+      #ws-mode {
+        position: relative;
+        right: 0;
+      }
     }
   </style>
   <script src="scripts.js"></script>
