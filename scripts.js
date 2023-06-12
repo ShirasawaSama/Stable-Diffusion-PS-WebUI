@@ -1,5 +1,5 @@
 const { app, action, core, constants } = require('photoshop')
-const { storage: { localFileSystem: fs, formats } } = require('uxp')
+const { shell, storage: { localFileSystem: fs, formats } } = require('uxp')
 const { batchPlay } = action
 
 const webview = document.getElementById('webview')
@@ -131,6 +131,8 @@ const execInModal = (func, name) => core.executeAsModal(async () => {
   try { await func() } catch (e) { console.error(e) }
 }, { commandName: name })
 
+document.getElementById('github').addEventListener('click', () =>
+  shell.openExternal('https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI', 'Thanks for your star!'))
 document.getElementById('fill').addEventListener('click', () => execInModal(fillIntoWebview, 'Fill data into webview'))
 document.getElementById('go').addEventListener('click', () => {
   const elm = document.getElementById('url')

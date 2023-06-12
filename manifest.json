@@ -11,12 +11,14 @@
     }
   ],
   "requiredPermissions": {
-    "clipboard": "readAndWrite",
     "webview": {
       "allow": "yes",
       "domains": "all",
       "allowLocalRendering": "yes",
       "enableMessageBridge": "localAndRemote"
+    },
+    "launchProcess": {    
+      "schemes": ["https"]    
     }
   },
   "entrypoints": [

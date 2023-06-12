@@ -16,8 +16,10 @@
     }
 
     .buttons {
+      width: 100%;
       text-align: center;
       padding: 8px 0;
+      position: relative;
     }
 
     #fill {
@@ -26,12 +28,23 @@
     #go {
       margin-left: 6px;
     }
+
+    sp-body {
+      position: absolute;
+      left: 16px;
+      top: 10px;
+    }
+
+    a {
+      color: inherit!important;
+    }
   </style>
   <script src="scripts.js"></script>
 </head>
 
 <body>
   <div class="buttons">
+    <sp-body>By: <a href="https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI" id="github">Shirasawa</a></sp-body>
     <sp-button variant="cta" id="fill">LOAD!!</sp-button>
     <sp-textfield placeholder="Stable Diffusion WebUI URL" id="url"></sp-textfield>
     <sp-button variant="primary" id="go">GO</sp-button>
