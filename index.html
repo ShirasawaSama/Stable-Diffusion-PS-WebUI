@@ -38,6 +38,15 @@
     a {
       color: inherit!important;
     }
+
+    sp-checkbox {
+      position: absolute;
+      right: 16px;
+    }
+
+    sp-textfield {
+      width: 140px;
+    }
   </style>
   <script src="scripts.js"></script>
 </head>
@@ -45,9 +54,10 @@
 <body>
   <div class="buttons">
     <sp-body>By: <a href="https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI" id="github">Shirasawa</a></sp-body>
-    <sp-button variant="cta" id="fill">LOAD!!</sp-button>
+    <sp-button variant="cta" id="fill" disabled>LOAD!!</sp-button>
     <sp-textfield placeholder="Stable Diffusion WebUI URL" id="url"></sp-textfield>
     <sp-button variant="primary" id="go">GO</sp-button>
+    <sp-checkbox id="ws-mode">WS Mode</sp-checkbox>
   </div>
   <webview id="webview" width="100%" height="500px"></webview>
 </body>

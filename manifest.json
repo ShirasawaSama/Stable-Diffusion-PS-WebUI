@@ -17,6 +17,9 @@
     },
     "launchProcess": {    
       "schemes": ["https"]    
+    },
+    "network": {
+      "domains": "all"
     }
   },
   "entrypoints": [
@@ -26,7 +29,7 @@
       "label": "Stable Diffusion WebUI",
       "minimumSize": {
         "width": 600,
-        "height": 400
+        "height": 200
       },
       "maximumSize": {
         "width": 9999999,

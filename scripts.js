@@ -3,21 +3,72 @@ const { shell, storage: { localFileSystem: fs, formats } } = require('uxp')
 const { batchPlay } = action
 
 const webview = document.getElementById('webview')
+const wsMode = document.getElementById('ws-mode')
+const fillBtn = document.getElementById('fill')
+const urlElm = document.getElementById('url')
 
+let ws
 const promises = { }
-window.addEventListener('message', ({ data }) => {
-  if (!data || !data.includes('sd-webui')) return
-  const { id, result } = JSON.parse(data)
-  const p = promises[id]
-  if (p) {
-    p(result)
-    delete promises[id]
+
+function handleMessage (obj) {
+  obj.addEventListener('message', ({ data }) => {
+    if (!data || !data.includes('sd-webui')) return
+    const { id, result } = JSON.parse(data)
+    const p = promises[id]
+    if (p) {
+      p(result)
+      delete promises[id]
+    }
+  })
+}
+
+function go () {
+  const url = localStorage.getItem('url')
+  webview.style.display = wsMode.checked || !url ? 'none' : ''
+  if (!url) {
+    fillBtn.setAttribute('disabled', 'disabled')
+    return
   }
+  if (ws) {
+    try { ws.close() } catch { }
+    ws = null
+  }
+  if (wsMode.checked) {
+    ws = new WebSocket(url)
+    ws.onopen = () => {
+      console.log('opened')
+      fillBtn.removeAttribute('disabled')
+      const onclose = () => {
+        console.log('closed')
+        if (wsMode.checked) {
+          fillBtn.setAttribute('disabled', 'disabled')
+          setTimeout(go, 1000)
+        }
+      }
+      ws.onclose = onclose
+      ws.onerror = onclose
+      handleMessage(ws)
+    }
+  } else {
+    fillBtn.removeAttribute('disabled')
+    webview.src = url
+  }
+}
+
+wsMode.checked = localStorage.getItem('ws-mode') === 'true'
+wsMode.addEventListener('change', () => {
+  localStorage.setItem('ws-mode', '' + wsMode.checked)
+  webview.style.display = wsMode.checked ? 'none' : ''
+  go()
 })
+
+handleMessage(window)
 
 const execRemote = code => {
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 9)
-  webview.postMessage(JSON.stringify({ id, code: `{${code}}` }))
+  const data = JSON.stringify({ id, code: `{${code}}` })
+  if (wsMode.checked) ws.send(data)
+  else webview.postMessage(data)
   return new Promise(resolve => (promises[id] = resolve))
 }
 const fillRemoteImage = (field, data) => execRemote(`
@@ -133,15 +184,14 @@ const execInModal = (func, name) => core.executeAsModal(async () => {
 
 document.getElementById('github').addEventListener('click', () =>
   shell.openExternal('https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI', 'Thanks for your star!'))
-document.getElementById('fill').addEventListener('click', () => execInModal(fillIntoWebview, 'Fill data into webview'))
+fillBtn.addEventListener('click', () => execInModal(fillIntoWebview, 'Fill data into webview'))
 document.getElementById('go').addEventListener('click', () => {
-  const elm = document.getElementById('url')
-  const url = elm.value
+  const url = urlElm.value
   if (!url) return
-  elm.value = ''
-  webview.src = url
   localStorage.setItem('url', url)
+  urlElm.value = url
+  go()
 })
 
-const url = localStorage.getItem('url')
-if (url) webview.src = url
+go()
+urlElm.value = localStorage.getItem('url')
