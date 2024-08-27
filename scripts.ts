@@ -35,19 +35,23 @@ const suspendHistory = async (fn: ((ctx: ExecutionContext) => Promise<unknown>) 
   if (error) throw error
 }
 
-const webview = document.getElementById('webview') as HTMLIFrameElement & { postMessage: (data: string) => void }
+const webview = document.getElementById('webview') as HTMLIFrameElement & { postMessage: (data: any) => void }
 const fillBtn = document.getElementById('fill') as HTMLButtonElement
 const urlElm = document.getElementById('url') as HTMLInputElement
 
-const promises: Record<string, (result: any) => void> = {}
+const promises: Record<string, [(result: any) => void, (result: any) => void]> = {}
 
 window.addEventListener('message', ({ data }) => {
-  if (!data?.includes('sd-webui')) return
-  const { id, result } = JSON.parse(data)
-  const p = promises[id]
-  if (p) {
-    p(result)
-    delete promises[id]
+  if (data?.type !== 'sd-webui') return
+  switch (data.action) {
+    case 'result': {
+      const p = promises[data.id]
+      if (p) {
+        if (data.error) p[1](data.error)
+        else p[0](data.result)
+      }
+      break
+    }
   }
 })
 
@@ -64,23 +68,36 @@ function go () {
 
 const execRemote = (code: string) => {
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 9)
-  const data = JSON.stringify({ id, code: `{${code}}` })
-  webview.postMessage(data)
+  webview.postMessage({ id, code: `{${code}}` })
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       delete promises[id]
       reject(Error('Timeout'))
     }, 10000)
-    promises[id] = (result: any) => {
+    promises[id] = [(result: any) => {
+      delete promises[id]
       clearTimeout(timer)
       resolve(result)
-    }
+    }, (error: any) => {
+      delete promises[id]
+      clearTimeout(timer)
+      reject(error)
+    }]
   })
 }
 const fillRemoteImage = (field: string, data: string) => execRemote(`
   const file = document.querySelector('#${field} input')
   const dataTransfer = new DataTransfer()
-  dataTransfer.items.add(new File([window.dataURLtoFile('${data}')], 'image.jpg', { type: 'image/jpeg' }))
+  const dataURLtoFile = (dataurl) => {
+    const arr = dataurl.split(','),
+      mime = arr[0].match(/:(.*?);/)[1]
+      bstr = atob(arr[arr.length - 1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n)
+      while(n--) u8arr[n] = bstr.charCodeAt(n)
+    return new File([u8arr])
+  }
+  dataTransfer.items.add(new File([dataURLtoFile('${data}')], 'image.jpg', { type: 'image/jpeg' }))
   file.files = dataTransfer.files
   file.dispatchEvent(new Event('change'))
   void 0
@@ -254,12 +271,12 @@ const base64Encode = (buffer: ArrayBuffer) => {
   return window.btoa(binary)
 }
 
-const base64Decode = (base64: string) => {
-  const binary = window.atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes.buffer
-}
+// const base64Decode = (base64: string) => {
+//   const binary = window.atob(base64)
+//   const bytes = new Uint8Array(binary.length)
+//   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+//   return bytes.buffer
+// }
 
 const fillIntoWebview = async () => {
   const selection = (await getSelection())?.[0]?.selection
@@ -286,18 +303,23 @@ const fillIntoWebview = async () => {
     const [buffer] = await copyIntoArrayBuffer()
 
     await execRemote(`
-      window.dataURLtoFile = (dataurl, filename) => {
-        const arr = dataurl.split(','),
-          mime = arr[0].match(/:(.*?);/)[1]
-          bstr = atob(arr[arr.length - 1]),
-          n = bstr.length,
-          u8arr = new Uint8Array(n)
-          while(n--) u8arr[n] = bstr.charCodeAt(n)
-        return new File([u8arr], filename, { type: mime })
+      if (!window.__pssdInjected) {
+        [...document.querySelectorAll('.image-buttons>div')].forEach(it => {
+          const elm = document.createElement('button')
+          elm.className = it.querySelector('button').className
+          elm.setAttribute('title', '回填PS')
+          elm.innerText = '😋'
+          elm.onclick = () => {
+            const img = it.parentNode.parentNode.parentNode.querySelector('img[data-testid]')
+            if (img && img.src) window.uxpHost.postMessage({ type: 'sd-webui', action: 'loadImage', url: img.src })
+          }
+          it.appendChild(elm)
+        })
+        window.__pssdInjected = true
       }
       document.querySelectorAll('#tabs .tab-nav button')[1].click()
       document.querySelectorAll('#img2img_settings .tab-nav button')[0].click()
-      document.querySelector('#img2img_tab_resize_by-button').click()
+      document.querySelectorAll('#img2img_tabs_resize button')[1].click()
     `)
 
     await fillRemoteImage('img2img_image', `data:image/jpeg;base64,${base64Encode(buffer)}`)
