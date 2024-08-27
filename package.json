@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A stable diffusion webui plugin for Photoshop.",
   "main": "scripts.js",
-  "type": "module",
   "scripts": {
     "test": "eslint .",
     "start": "node server",
@@ -26,14 +25,13 @@
   },
   "homepage": "https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI#readme",
   "devDependencies": {
-    "eslint": "^8.42.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-n": "^16.0.0",
-    "eslint-plugin-promise": "^6.1.1"
-  },
-  "dependencies": {
-    "puppeteer": "^20.6.0",
-    "ws": "^8.13.0"
+    "@types/photoshop": "^25.0.4",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "eslint": "^8.57.0",
+    "eslint-config-standard-with-typescript": "^43.0.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.6.0",
+    "typescript": "^5.5.4"
   }
 }

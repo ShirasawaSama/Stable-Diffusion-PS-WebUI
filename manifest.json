@@ -17,9 +17,6 @@
     },
     "launchProcess": {    
       "schemes": ["https"]    
-    },
-    "network": {
-      "domains": "all"
     }
   },
   "entrypoints": [

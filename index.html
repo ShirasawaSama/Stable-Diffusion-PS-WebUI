@@ -39,11 +39,6 @@
       color: inherit!important;
     }
 
-    #ws-mode {
-      position: absolute;
-      right: 16px;
-    }
-
     sp-textfield {
       width: 140px;
     }
@@ -58,24 +53,19 @@
       #fill, #go {
         margin: 0;
       }
-
-      #ws-mode {
-        position: relative;
-        right: 0;
-      }
     }
   </style>
-  <script src="scripts.js"></script>
 </head>
 
 <body>
   <div class="buttons">
     <sp-body>By: <a href="https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI" id="github">Shirasawa</a></sp-body>
-    <sp-button variant="cta" id="fill" disabled>LOAD!!</sp-button>
+    <sp-button variant="cta" id="fill" disabled>加载</sp-button>
     <sp-textfield placeholder="Stable Diffusion WebUI URL" id="url"></sp-textfield>
-    <sp-button variant="primary" id="go">GO</sp-button>
-    <sp-checkbox id="ws-mode">WS Mode</sp-checkbox>
+    <sp-button variant="primary" id="go">前往</sp-button>
   </div>
   <webview id="webview" width="100%" height="500px" uxpAllowInspector="true"></webview>
+  <script src="preload.js"></script>
+  <script src="scripts.js"></script>
 </body>
 </html>

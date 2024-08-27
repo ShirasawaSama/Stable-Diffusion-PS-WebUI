@@ -1,15 +1,20 @@
 {
     "env": {
         "browser": true,
-        "commonjs": true,
         "es2021": true
     },
-    "extends": [
-        "standard"
-    ],
+    "extends": "standard-with-typescript",
     "parserOptions": {
-        "ecmaVersion": 13
+        "ecmaVersion": "latest",
+        "sourceType": "module"
     },
     "rules": {
+        "@typescript-eslint/promise-function-async": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/no-dynamic-delete": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/prefer-nullish-coalescing": "off"
     }
 }
