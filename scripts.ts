@@ -10,6 +10,8 @@ interface FileEntry {
   write: (data: ArrayBuffer, options: { format: any }) => Promise<void>
 }
 
+const PADDING_FACTOR = 0.05
+
 // @ts-expect-error 无法使用 import
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { shell, storage: { localFileSystem: fs, formats } } = require('uxp')
@@ -47,7 +49,7 @@ window.addEventListener('message', ({ data }) => {
     case 'result': {
       const p = promises[data.id]
       if (p) {
-        if (data.error) p[1](data.error)
+        if (data.error) p[1](new Error(data.error))
         else p[0](data.result)
       }
       break
@@ -62,16 +64,26 @@ window.addEventListener('message', ({ data }) => {
           return
         }
 
-        const padding = Math.max(selection.right._value - selection.left._value, selection.bottom._value - selection.top._value) / 10
+        const padding = Math.max(selection.right._value - selection.left._value, selection.bottom._value - selection.top._value) * PADDING_FACTOR | 0
 
-        await importLayer(base64Decode(data.data))
+        await importLayer(base64Decode(data.data.split(',')[1]))
         const layer = app.activeDocument.activeLayers[0]
         if (!layer) {
           await core.showAlert('Cannot find layer')
           return
         }
-        await layer.scale((selection.right._value - selection.left._value + padding * 2) / (layer.bounds.right - layer.bounds.left) * 100, (selection.bottom._value - selection.top._value + padding * 2) / (layer.bounds.bottom - layer.bounds.top) * 100)
+        await layer.scale(
+          (selection.right._value - selection.left._value + padding * 2) / (layer.bounds.right - layer.bounds.left) * 100,
+          (selection.bottom._value - selection.top._value + padding * 2) / (layer.bounds.bottom - layer.bounds.top) * 100
+        )
         await layer.translate(selection.left._value - padding - layer.bounds.left, selection.top._value - padding - layer.bounds.top)
+
+        await loadSelectionArea()
+        await batchPlay([
+          { _obj: 'expand', by: { _unit: 'pixelsUnit', _value: padding / 10 }, selectionModifyEffectAtCanvasBounds: false },
+          { _obj: 'make', at: { _enum: 'channel', _ref: 'channel', _value: 'mask' }, new: { _class: 'channel' }, using: { _enum: 'userMaskEnabled', _value: 'revealSelection' } },
+          { _obj: 'set', _target: [{ _enum: 'ordinal', _ref: 'layer', _value: 'targetEnum' }], to: { _obj: 'layer', userMaskFeather: { _unit: 'pixelsUnit', _value: 25.5 } } }
+        ])
       }, 'Load Image')
       break
     }
@@ -118,27 +130,27 @@ const fillRemoteImage = (field: string, data: string) => execRemote(`
       n = bstr.length,
       u8arr = new Uint8Array(n)
       while(n--) u8arr[n] = bstr.charCodeAt(n)
-    return new File([u8arr])
+    return new File([u8arr], {})
   }
   dataTransfer.items.add(new File([dataURLtoFile('${data}')], 'image.jpg', { type: 'image/jpeg' }))
   file.files = dataTransfer.files
   file.dispatchEvent(new Event('change'))
   void 0
 `)
-const fillRemoteInput = (field: string, data: string) => execRemote(`
-  const field = document.querySelector('#${field} .wrap input')
-  field.value = ${JSON.stringify('' + data)}
-  field.dispatchEvent(new Event('input'))
-  void 0
-`)
+// const fillRemoteInput = (field: string, data: string) => execRemote(`
+//   const field = document.querySelector('#${field} .wrap input')
+//   field.value = ${JSON.stringify('' + data)}
+//   field.dispatchEvent(new Event('input'))
+//   void 0
+// `)
 
-const color = (red = 0, green = 0, blue = 0) => {
-  const c = new app.SolidColor()
-  c.rgb.red = red
-  c.rgb.green = green
-  c.rgb.blue = blue
-  return c
-}
+// const color = (red = 0, green = 0, blue = 0) => {
+//   const c = new app.SolidColor()
+//   c.rgb.red = red
+//   c.rgb.green = green
+//   c.rgb.blue = blue
+//   return c
+// }
 
 const disactiveAllLayers = () => batchPlay([{ _obj: 'selectNoLayers', _target: [{ _enum: 'ordinal', _ref: 'layer', _value: 'targetEnum' }] }])
 const setActiveLayer = (layer: Layer) => {
@@ -238,7 +250,10 @@ const deleteSelectionArea = () => batchPlay([{ _obj: 'delete', _target: [{ _ref:
 const saveSelectionArea = () => batchPlay([
   { _obj: 'make', new: { _obj: 'channel', color: { _obj: 'RGBColor', blue: 0.0, grain: 0.0, red: 255.0 }, colorIndicates: { _enum: 'maskIndicator', _value: 'maskedAreas' }, name: 'PSSD - Selection', opacity: 50 }, using: { _property: 'selection', _ref: 'channel' } }
 ])
-const loadSelectionArea = () => batchPlay([{ _obj: 'select', _target: [{ _name: 'PSSD - Selection', _ref: 'channel' }] }])
+
+const loadSelectionArea = () => batchPlay([
+  { _obj: 'set', _target: [{ _property: 'selection', _ref: 'channel' }], to: { _name: 'PSSD - Selection', _ref: 'channel' } }
+])
 
 const copyToNewLayer = () => batchPlay([{ _obj: 'copyToLayer' }])
 const importLayer = async (buffer: ArrayBuffer) => {
@@ -315,10 +330,12 @@ const fillIntoWebview = async () => {
     if (!mergedLayer) throw Error('Cannot find merged layer')
     setActiveLayer(mergedLayer)
 
-    const padding = Math.max(selection.right._value - selection.left._value, selection.bottom._value - selection.top._value) / 10
+    const padding = Math.max(selection.right._value - selection.left._value, selection.bottom._value - selection.top._value) * PADDING_FACTOR | 0
     await makeSelection(selection.top._value - padding, selection.left._value - padding, selection.bottom._value + padding, selection.right._value + padding)
 
     const [buffer] = await copyIntoArrayBuffer()
+
+    deleteMergeLayer()
 
     await execRemote(`
       if (!window.__pssdInjected) {
@@ -333,7 +350,7 @@ const fillIntoWebview = async () => {
             fetch(img.src).then(res => res.blob()).then(blob => {
               const reader = new FileReader()
               reader.onload = () => window.uxpHost.postMessage({ type: 'sd-webui', action: 'loadImage', data: reader.result })
-              reader.readAsArrayBuffer(blob)
+              reader.readAsDataURL(blob)
             })
           }
           it.appendChild(elm)
@@ -346,14 +363,15 @@ const fillIntoWebview = async () => {
     `)
 
     await fillRemoteImage('img2img_image', `data:image/jpeg;base64,${base64Encode(buffer)}`)
+    await loadSelectionArea()
   } catch (err: any) {
-    void core.showAlert({ message: err.message })
+    void core.showAlert({ message: err?.message || err })
     console.error(err)
   }
 }
 
 document.getElementById('github')!.onclick = () => shell.openExternal('https://github.com/ShirasawaSama/Stable-Diffusion-PS-WebUI', 'Thanks for your star!')
-fillBtn.onclick = () => core.executeAsModal(fillIntoWebview, { commandName: 'Fill into Webview' })
+fillBtn.onclick = () => suspendHistory(fillIntoWebview, 'Fill into Webview')
 document.getElementById('go')!.onclick = () => {
   const url = urlElm.value
   if (!url) return
