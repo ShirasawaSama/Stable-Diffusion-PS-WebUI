@@ -2,7 +2,7 @@ window.uxpHost && window.addEventListener('message', async e => {
   if (e.source !== window.uxpHost) return
   let error, result
   try {
-    result = await eval(code)
+    result = await eval(e.data.code)
   } catch (e) {
     error = e
   }

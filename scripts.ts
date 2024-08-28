@@ -52,6 +52,29 @@ window.addEventListener('message', ({ data }) => {
       }
       break
     }
+    case 'loadImage': {
+      void suspendHistory(async () => {
+        await disactiveAllLayers()
+        await loadSelectionArea()
+        const selection = (await getSelection())?.[0]?.selection
+        if (!selection) {
+          await core.showAlert({ message: 'Cannot find selection!' })
+          return
+        }
+
+        const padding = Math.max(selection.right._value - selection.left._value, selection.bottom._value - selection.top._value) / 10
+
+        await importLayer(base64Decode(data.data))
+        const layer = app.activeDocument.activeLayers[0]
+        if (!layer) {
+          await core.showAlert('Cannot find layer')
+          return
+        }
+        await layer.scale((selection.right._value - selection.left._value + padding * 2) / (layer.bounds.right - layer.bounds.left) * 100, (selection.bottom._value - selection.top._value + padding * 2) / (layer.bounds.bottom - layer.bounds.top) * 100)
+        await layer.translate(selection.left._value - padding - layer.bounds.left, selection.top._value - padding - layer.bounds.top)
+      }, 'Load Image')
+      break
+    }
   }
 })
 
@@ -115,10 +138,6 @@ const color = (red = 0, green = 0, blue = 0) => {
   c.rgb.green = green
   c.rgb.blue = blue
   return c
-}
-
-function unselectActiveLayers () {
-  app.activeDocument.activeLayers.forEach(layer => (layer.selected = false))
 }
 
 const disactiveAllLayers = () => batchPlay([{ _obj: 'selectNoLayers', _target: [{ _enum: 'ordinal', _ref: 'layer', _value: 'targetEnum' }] }])
@@ -219,6 +238,7 @@ const deleteSelectionArea = () => batchPlay([{ _obj: 'delete', _target: [{ _ref:
 const saveSelectionArea = () => batchPlay([
   { _obj: 'make', new: { _obj: 'channel', color: { _obj: 'RGBColor', blue: 0.0, grain: 0.0, red: 255.0 }, colorIndicates: { _enum: 'maskIndicator', _value: 'maskedAreas' }, name: 'PSSD - Selection', opacity: 50 }, using: { _property: 'selection', _ref: 'channel' } }
 ])
+const loadSelectionArea = () => batchPlay([{ _obj: 'select', _target: [{ _name: 'PSSD - Selection', _ref: 'channel' }] }])
 
 const copyToNewLayer = () => batchPlay([{ _obj: 'copyToLayer' }])
 const importLayer = async (buffer: ArrayBuffer) => {
@@ -271,21 +291,19 @@ const base64Encode = (buffer: ArrayBuffer) => {
   return window.btoa(binary)
 }
 
-// const base64Decode = (base64: string) => {
-//   const binary = window.atob(base64)
-//   const bytes = new Uint8Array(binary.length)
-//   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-//   return bytes.buffer
-// }
+const base64Decode = (base64: string) => {
+  const binary = window.atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes.buffer
+}
 
 const fillIntoWebview = async () => {
-  const selection = (await getSelection())?.[0]?.selection
+  const selection = (await getSelection())?.[0]?.selection as { top: { _value: number }, left: { _value: number }, bottom: { _value: number }, right: { _value: number } }
   if (!selection) {
     await core.showAlert({ message: 'Please make a selection first!' })
     return
   }
-
-  console.log(selection)
 
   try {
     deleteMergeLayer()
@@ -297,7 +315,7 @@ const fillIntoWebview = async () => {
     if (!mergedLayer) throw Error('Cannot find merged layer')
     setActiveLayer(mergedLayer)
 
-    const padding = Math.max(mergedLayer.bounds.right - mergedLayer.bounds.left, mergedLayer.bounds.bottom - mergedLayer.bounds.top) / 50
+    const padding = Math.max(selection.right._value - selection.left._value, selection.bottom._value - selection.top._value) / 10
     await makeSelection(selection.top._value - padding, selection.left._value - padding, selection.bottom._value + padding, selection.right._value + padding)
 
     const [buffer] = await copyIntoArrayBuffer()
@@ -311,7 +329,12 @@ const fillIntoWebview = async () => {
           elm.innerText = '😋'
           elm.onclick = () => {
             const img = it.parentNode.parentNode.parentNode.querySelector('img[data-testid]')
-            if (img && img.src) window.uxpHost.postMessage({ type: 'sd-webui', action: 'loadImage', url: img.src })
+            if (!img || !img.src) return
+            fetch(img.src).then(res => res.blob()).then(blob => {
+              const reader = new FileReader()
+              reader.onload = () => window.uxpHost.postMessage({ type: 'sd-webui', action: 'loadImage', data: reader.result })
+              reader.readAsArrayBuffer(blob)
+            })
           }
           it.appendChild(elm)
         })
