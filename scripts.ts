@@ -339,7 +339,8 @@ const fillIntoWebview = async () => {
 
     await execRemote(`
       if (!window.__pssdInjected) {
-        [...document.querySelectorAll('.image-buttons>div')].forEach(it => {
+        var elms = [...document.querySelectorAll('.image-buttons>div')]
+        ;(elms.length ? elms : [...document.querySelectorAll('.image-buttons')]).forEach(it => {
           const elm = document.createElement('button')
           elm.className = it.querySelector('button').className
           elm.setAttribute('title', '回填PS')
