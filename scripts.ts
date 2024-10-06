@@ -360,7 +360,7 @@ const fillIntoWebview = async () => {
       }
       document.querySelectorAll('#tabs .tab-nav button')[1].click()
       document.querySelectorAll('#img2img_settings .tab-nav button')[0].click()
-      document.querySelectorAll('#img2img_tabs_resize button')[1].click()
+      ;(document.querySelectorAll('#img2img_tabs_resize button')[1] || document.querySelectorAll('#img2img_column_size button')[1]).click()
     `)
 
     await fillRemoteImage('img2img_image', `data:image/jpeg;base64,${base64Encode(buffer)}`)

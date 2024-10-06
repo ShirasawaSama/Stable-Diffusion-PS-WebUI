@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "A stable diffusion webui plugin for Photoshop.",
   "main": "scripts.js",
+  "type": "module",
   "scripts": {
     "test": "eslint .",
     "start": "node server",
-    "build": "node build"
+    "zip": "zip -r Stable-Diffusion-PS-WebUI.zip Stable-Diffusion-PS-WebUI/",
+    "build": "tsc && node build && npm run zip"
   },
   "repository": {
     "type": "git",

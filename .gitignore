@@ -2,3 +2,4 @@ node_modules
 cache
 Stable-Diffusion-PS-WebUI
 scripts.js
+*.zip
